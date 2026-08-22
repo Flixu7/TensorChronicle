@@ -1,23 +1,23 @@
 # TensorChronicle
 
-A modern, fast, multi-threaded photo organizer with EXIF date extraction, duplicate detection, and a PySide6 GUI.
+The application is a multi threaded photo organizer that operates at high speeds and uses a PySide6 GUI to manage EXIF date extraction and duplicate detection.
 
-## 🚀 Features
+Features
 
-- **Automatic Organization**: Sorts photos into directories structured by Year and Season (Wiosna, Lato, Jesień, Zima).
-- **EXIF & Date Extraction**: Reads original capture dates from EXIF metadata, fallback to filename pattern matching, and file modification timestamps.
-- **SHA-256 Duplicate Detection**: Prevents duplicate photos across different folders and file names using SHA-256 content hashing.
-- **Name Collision Strategies**:
-  - `unique` (default): Automatically appends counter suffixes (`photo_1.jpg`, `photo_2.jpg`).
-  - `skip`: Skips processing if a file with the same name exists in the target folder.
-  - `overwrite`: Replaces existing file in the target directory.
-- **Multi-threaded Execution**: Fast parallel processing using a worker pool.
-- **Dry-Run Mode**: Preview organizing results and generated reports without modifying filesystem.
-- **PySide6 Graphical Interface**: User-friendly GUI alongside a full-featured CLI interface.
+- The software sorts image files into directories that it structures by Year & Season, specifically Wiosna, Lato, Jesień & Zima.
+- It reads the original capture dates from EXIF metadata but it uses filename pattern matching or file modification timestamps if that data is missing.
+- There is a SHA-256 content hashing mechanism that prevents the presence of duplicate images across different folders and file names.
+- Strategies for name collisions are
+- The `unique` setting is the default and it appends counter suffixes like `photo_1.jpg` or `photo_2.jpg`.
+- The `skip` setting stops the process if a file with the same name already exists in the target folder.
+- The `overwrite` setting replaces the file that exists in the target directory.
+- Fast parallel processing is possible because the application uses a multi threaded worker pool.
+- In Dry Run Mode, the user previews the results and generated reports without the software modifying the filesystem.
+- The PySide6 Graphical Interface is available for users alongside a full featured CLI interface.
 
 ---
 
-## 🛠️ Installation
+Installation
 
 ```bash
 git clone https://github.com/Flixu7/TensorChronicle.git
@@ -27,11 +27,11 @@ pip install -r requirements.txt
 
 ---
 
-## 🖥️ Usage
+Usage
 
-### Graphical Interface (GUI)
+Graphical Interface (GUI)
 
-Launch the PySide6 application:
+By running this command, the user launches the PySide6 application
 
 ```bash
 python -m photo_organizer.gui
@@ -39,76 +39,10 @@ python -m photo_organizer.gui
 
 ---
 
-### Command Line Interface (CLI)
+Command Line Interface (CLI)
 
-Run via module execution:
-
-```bash
-python -m photo_organizer.cli -i /path/to/photos -o /path/to/organized
-```
-
-#### CLI Options
-
-| Argument | Short | Default | Description |
-|---|---|---|---|
-| `--input` | `-i` | Required | Space-separated list of input directories |
-| `--output` | `-o` | Required | Target output directory |
-| `--mode` | `-m` | `copy` | Operation mode: `copy` or `move` |
-| `--dry-run` | | `False` | Run simulation without file modifications |
-| `--no-duplicates-check` | | `False` | Disable SHA-256 duplicate detection |
-| `--collision` | | `unique` | Strategy for filename conflicts (`unique`, `skip`, `overwrite`) |
-| `--workers` | `-w` | `4` | Number of worker threads |
-
-Example:
+To run the application via module execution, the user enters
 
 ```bash
-python -m photo_organizer.cli -i ./Unsorted1 ./Unsorted2 -o ./SortedPhotos -m copy --collision unique -w 8
-```
-
----
-
-## 📁 Directory & Project Structure
-
-```
-TensorChronicle/
-├── photo_organizer/
-│   ├── __init__.py
-│   ├── cli.py               # CLI entry point
-│   ├── date_extractor.py    # EXIF & filename date parsing
-│   ├── duplicate_detector.py # SHA-256 hash duplication checking
-│   ├── gui.py               # PySide6 desktop GUI
-│   ├── organizer.py         # Main multi-threaded sorting engine
-│   └── season.py            # Seasonal mapping logic
-├── TensorChronicle/
-│   └── ui_constellation.py  # Constellation-inspired UI component
-├── tests/
-│   ├── test_date_extractor.py
-│   ├── test_gui.py
-│   └── test_organizer.py
-├── requirements.txt
-└── README.md
-```
-
----
-
-## ⚙️ How Duplicate Detection & Collision Handling Works
-
-1. **Content Duplicates (`check_duplicates=True`)**
-   - Calculates SHA-256 digest for each file.
-   - If identical content was already processed, the duplicate is skipped and recorded in the report.
-
-2. **Name Collisions (`collision_strategy`)**
-   - When different files share the same filename in the same target folder:
-     - `unique`: Generates unique names (`12092011_1.png`, `12092011_2.png`).
-     - `skip`: Skips duplicate name file and records entry in final report.
-     - `overwrite`: Overwrites target file.
-
----
-
-## 🧪 Running Automated Tests
-
-Run the test suite using `pytest`:
-
-```bash
-python -m pytest
+python -m photo_organizer.cli -i /path/to/photos
 ```
