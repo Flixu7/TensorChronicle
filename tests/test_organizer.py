@@ -33,8 +33,8 @@ def test_organize_photos_copy(tmp_path):
     assert report.processed_count == 2
     assert len(report.skipped_files) == 1
     
-    target_f1 = out_dir / "2011" / "jesień" / "12092011.png"
-    target_f2 = out_dir / "2022" / "zima" / "01012022.jpg"
+    target_f1 = out_dir / "organized_photos" / "2011" / "jesień" / "12092011.png"
+    target_f2 = out_dir / "organized_photos" / "2022" / "zima" / "01012022.jpg"
 
     assert target_f1.exists()
     assert target_f2.exists()
@@ -57,7 +57,7 @@ def test_organize_photos_dry_run(tmp_path):
 
     report = organize_photos(options)
     assert report.processed_count == 1
-    target_f1 = out_dir / "2015" / "lato" / "15062015.jpg"
+    target_f1 = out_dir / "organized_photos" / "2015" / "lato" / "15062015.jpg"
     assert not target_f1.exists()
 
 def test_organize_video_files(tmp_path):
@@ -76,5 +76,5 @@ def test_organize_video_files(tmp_path):
 
     report = organize_photos(options)
     assert report.processed_count == 1
-    assert (out_dir / "2021" / "lato" / "VID_20210815_120000.mp4").exists()
+    assert (out_dir / "organized_photos" / "2021" / "lato" / "VID_20210815_120000.mp4").exists()
 

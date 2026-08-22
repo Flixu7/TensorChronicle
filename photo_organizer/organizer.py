@@ -94,7 +94,7 @@ def organize_photos(options: OrganizerOptions) -> OrganizeReport:
             season_str = get_season(dt.month)
             rel_dir = Path(year_str) / season_str
 
-        dest_dir = options.output_dir / rel_dir
+        dest_dir = options.output_dir / "organized_photos" / rel_dir
         dest_file_path = dest_dir / src_path.name
 
         with lock:
