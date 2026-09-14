@@ -36,7 +36,7 @@ COLOR_SURFACE_ACTIVE = "#182222"    # data-state=active (aktywna zakładka/wiers
 COLOR_SURFACE_INPUT = "#1e293b"     # --muted / --input
 COLOR_BORDER = "#272f30"            # --border
 COLOR_BORDER_STRONG = "#414b4e"     # obramowanie kart / hairline
-COLOR_TEXT_MUTED = "#797c7c"        # --muted-foreground
+COLOR_TEXT_MUTED = "#9aa3a3"        # --muted-foreground (rozjaśniony względem #797c7c źródła — tam ma niski kontrast, tu ma być czytelny)
 COLOR_TEXT_FAINT = "#5b6462"        # przygaszony wariant etykiet pobocznych
 COLOR_SECONDARY = "#c9c9cf"         # --secondary
 COLOR_SECONDARY_INK = "#0f172a"     # tekst na --secondary
@@ -74,7 +74,7 @@ SPACE_8 = 32
 DARK_STYLESHEET = f"""
 * {{
     font-family: "Inter", "Segoe UI", sans-serif;
-    font-size: 14px;
+    font-size: 15px;
 }}
 
 QWidget {{
@@ -90,17 +90,19 @@ QGroupBox {{
     background-color: {COLOR_SURFACE};
     border: 1px solid {COLOR_BORDER};
     border-radius: {RADIUS_CARD}px;
-    margin-top: {SPACE_4}px;
-    padding: {SPACE_5}px {SPACE_4}px {SPACE_4}px {SPACE_4}px;
+    margin-top: {SPACE_5}px;
+    padding: {SPACE_6}px {SPACE_5}px {SPACE_5}px {SPACE_5}px;
     font-weight: 600;
 }}
 
 QGroupBox::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: {SPACE_3}px;
+    left: {SPACE_4}px;
     padding: 0 {SPACE_2}px;
-    color: {COLOR_TEXT_MUTED};
+    color: {COLOR_TEXT};
+    font-size: 16px;
+    font-weight: 700;
 }}
 
 QLabel {{
@@ -108,18 +110,14 @@ QLabel {{
 }}
 
 /* Wariant "szklany" (odpowiednik secondary-button ze strony wzorcowej):
-   półprzezroczyste białe tło na ciemnej karcie. Ta sama geometria co primaryButton —
-   w źródle oba warianty CTA mają identyczne h-11/px-5/py-[10px], różni je tylko kolor. */
-QPushButton, QPushButton#primaryButton {{
-    border-radius: {RADIUS_CONTROL}px;
-    padding: {SPACE_3}px {SPACE_5}px;
-    font-weight: 500;
-}}
-
+   półprzezroczyste białe tło na ciemnej karcie. */
 QPushButton {{
     background-color: rgba(252, 252, 252, 40);
     color: {COLOR_TEXT};
     border: 1px solid {COLOR_BORDER_STRONG};
+    border-radius: {RADIUS_CONTROL}px;
+    padding: {SPACE_3}px {SPACE_5}px;
+    font-weight: 500;
 }}
 
 QPushButton:hover {{
@@ -140,11 +138,17 @@ QPushButton:focus {{
     border: 2px solid {COLOR_FOCUS_RING};
 }}
 
-/* Wariant "primary" (odpowiednik CTA ze strony wzorcowej): odwrócony, jasne tło na ciemnym motywie. */
+/* Wariant "primary" (odpowiednik CTA ze strony wzorcowej): odwrócony, jasne tło na ciemnym motywie.
+   W źródle CTA nigdy nie jest rozciągnięty na całą szerokość — to samo egzekwujemy w layoutach
+   (przycisk owinięty w QHBoxLayout ze stretchem zamiast dodany bezpośrednio do QVBoxLayout). */
 QPushButton#primaryButton {{
     background-color: {COLOR_ACCENT};
     color: {COLOR_ACCENT_INK};
     border: none;
+    border-radius: {RADIUS_CONTROL}px;
+    padding: {SPACE_4}px {SPACE_8}px;
+    font-weight: 600;
+    font-size: 16px;
 }}
 
 QPushButton#primaryButton:hover {{

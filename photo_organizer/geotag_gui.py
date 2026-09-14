@@ -14,7 +14,7 @@ from .geocoding import geocode_place
 from .geotagger import apply_geotag_to_paths, GeotagReport
 from .map_view import MapWidget, WEBENGINE_AVAILABLE
 from .widgets import DropListWidget
-from .theme import DARK_STYLESHEET
+from .theme import DARK_STYLESHEET, SPACE_4, SPACE_6
 
 
 class GeocodeWorker(QThread):
@@ -94,15 +94,19 @@ class GeotagPanel(QWidget):
 
     def _init_ui(self):
         main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
+        main_layout.setSpacing(SPACE_6)
 
         paths_group = QGroupBox("Zdjęcia i Katalogi")
         paths_layout = QVBoxLayout(paths_group)
+        paths_layout.setSpacing(SPACE_4)
 
         self.paths_list = DropListWidget()
         self.paths_list.paths_dropped.connect(self._add_dropped_paths)
         paths_layout.addWidget(self.paths_list)
 
         paths_btn_layout = QHBoxLayout()
+        paths_btn_layout.setSpacing(SPACE_4)
         btn_add_dir = QPushButton("Dodaj Katalog")
         btn_add_dir.clicked.connect(self._add_directory)
         btn_add_files = QPushButton("Dodaj Pliki")
@@ -121,8 +125,10 @@ class GeotagPanel(QWidget):
 
         location_group = QGroupBox("Lokalizacja")
         location_layout = QVBoxLayout(location_group)
+        location_layout.setSpacing(SPACE_4)
 
         search_layout = QHBoxLayout()
+        search_layout.setSpacing(SPACE_4)
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("np. Kraków, Rynek Główny")
         self.search_edit.returnPressed.connect(self._search_location)
@@ -140,6 +146,7 @@ class GeotagPanel(QWidget):
         location_layout.addWidget(self.search_result_label)
 
         coords_layout = QHBoxLayout()
+        coords_layout.setSpacing(SPACE_4)
         coords_layout.addWidget(QLabel("Szerokość (lat):"))
         self.lat_edit = QLineEdit()
         self.lat_edit.setValidator(QDoubleValidator(-90.0, 90.0, 6))
@@ -155,8 +162,13 @@ class GeotagPanel(QWidget):
 
         self.btn_apply = QPushButton("Zastosuj Geolokalizację")
         self.btn_apply.setObjectName("primaryButton")
+        self.btn_apply.setMinimumWidth(260)
         self.btn_apply.clicked.connect(self._apply_geotag)
-        main_layout.addWidget(self.btn_apply)
+        btn_apply_row = QHBoxLayout()
+        btn_apply_row.addStretch(1)
+        btn_apply_row.addWidget(self.btn_apply)
+        btn_apply_row.addStretch(1)
+        main_layout.addLayout(btn_apply_row)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)
@@ -318,7 +330,7 @@ class GeotagWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Dodawanie Geolokalizacji do Zdjęć")
-        self.resize(700, 700)
+        self.resize(780, 780)
         self.panel = GeotagPanel(self)
         self.setCentralWidget(self.panel)
 

@@ -16,7 +16,7 @@ from .geolocation import collect_all_photos
 from .map_view import PhotoMapDialog, thumbnail_data_uri
 from .geotag_gui import GeotagPanel
 from .widgets import DropListWidget
-from .theme import DARK_STYLESHEET
+from .theme import DARK_STYLESHEET, SPACE_4, SPACE_6
 
 class OrganizeWorker(QThread):
     finished_signal = Signal(OrganizeReport)
@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Organizator Zdjęć - PySide6")
-        self.resize(780, 720)
+        self.resize(860, 800)
         self._init_ui()
 
     def _init_ui(self):
@@ -70,15 +70,19 @@ class MainWindow(QMainWindow):
 
     def _init_organize_tab(self, container):
         main_layout = QVBoxLayout(container)
+        main_layout.setContentsMargins(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
+        main_layout.setSpacing(SPACE_6)
 
         input_group = QGroupBox("Katalogi Wejściowe")
         input_layout = QVBoxLayout(input_group)
-        
+        input_layout.setSpacing(SPACE_4)
+
         self.input_list = DropListWidget()
         self.input_list.paths_dropped.connect(self._add_dropped_paths)
         input_layout.addWidget(self.input_list)
 
         input_btn_layout = QHBoxLayout()
+        input_btn_layout.setSpacing(SPACE_4)
         btn_add_dir = QPushButton("Dodaj Katalog")
         btn_add_dir.clicked.connect(self._add_input_dir)
         btn_remove_dir = QPushButton("Usuń Zaznaczony")
@@ -102,6 +106,7 @@ class MainWindow(QMainWindow):
 
         output_group = QGroupBox("Katalog Docelowy")
         output_layout = QHBoxLayout(output_group)
+        output_layout.setSpacing(SPACE_4)
         self.output_edit = QLineEdit()
         btn_browse_output = QPushButton("Przeglądaj...")
         btn_browse_output.clicked.connect(self._browse_output_dir)
@@ -111,6 +116,7 @@ class MainWindow(QMainWindow):
 
         opts_group = QGroupBox("Opcje Przetwarzania")
         opts_layout = QHBoxLayout(opts_group)
+        opts_layout.setSpacing(SPACE_4)
 
         opts_layout.addWidget(QLabel("Tryb:"))
         self.mode_combo = QComboBox()
@@ -139,8 +145,13 @@ class MainWindow(QMainWindow):
 
         self.btn_start = QPushButton("Rozpocznij Organizację")
         self.btn_start.setObjectName("primaryButton")
+        self.btn_start.setMinimumWidth(260)
         self.btn_start.clicked.connect(self._start_processing)
-        main_layout.addWidget(self.btn_start)
+        btn_start_row = QHBoxLayout()
+        btn_start_row.addStretch(1)
+        btn_start_row.addWidget(self.btn_start)
+        btn_start_row.addStretch(1)
+        main_layout.addLayout(btn_start_row)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)
