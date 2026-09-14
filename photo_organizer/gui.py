@@ -1,14 +1,22 @@
 import sys
 from pathlib import Path
+from typing import Optional
 from PySide6.QtCore import QThread, Signal, Qt
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QListWidget, QLineEdit, QFileDialog,
+    QLabel, QPushButton, QLineEdit, QFileDialog,
     QComboBox, QCheckBox, QSpinBox, QTextEdit, QProgressBar,
-    QGroupBox, QMessageBox
+    QGroupBox, QMessageBox, QTabWidget
 )
 
+from concurrent.futures import ThreadPoolExecutor
+
 from .organizer import organize_photos, OrganizerOptions, OrganizeReport
+from .geolocation import collect_all_photos
+from .map_view import PhotoMapDialog, thumbnail_data_uri
+from .geotag_gui import GeotagPanel
+from .widgets import DropListWidget
+from .theme import DARK_STYLESHEET
 
 class OrganizeWorker(QThread):
     finished_signal = Signal(OrganizeReport)
@@ -21,22 +29,53 @@ class OrganizeWorker(QThread):
         report = organize_photos(self.options)
         self.finished_signal.emit(report)
 
+class GeotagScanWorker(QThread):
+    finished_signal = Signal(list)
+
+    def __init__(self, input_dirs):
+        super().__init__()
+        self.input_dirs = input_dirs
+
+    def run(self):
+        photos = collect_all_photos(self.input_dirs)
+
+        geotagged = [p for p in photos if p["lat"] is not None]
+        if geotagged:
+            # Miniaturki liczone równolegle tutaj (wątek roboczy), żeby PhotoMapDialog
+            # mógł je od razu wstawić do HTML bez blokowania wątku UI przy otwarciu mapy.
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                thumbs = executor.map(thumbnail_data_uri, (p["path"] for p in geotagged))
+                for photo, thumb in zip(geotagged, thumbs):
+                    photo["thumb"] = thumb
+
+        self.finished_signal.emit(photos)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Organizator Zdjęć - PySide6")
-        self.resize(750, 650)
+        self.resize(780, 720)
         self._init_ui()
 
     def _init_ui(self):
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        main_layout = QVBoxLayout(main_widget)
+        self.tabs = QTabWidget()
+        self.setCentralWidget(self.tabs)
+
+        organize_tab = QWidget()
+        self._init_organize_tab(organize_tab)
+        self.tabs.addTab(organize_tab, "Organizacja")
+
+        self.geotag_panel = GeotagPanel()
+        self.tabs.addTab(self.geotag_panel, "Geolokalizacja")
+
+    def _init_organize_tab(self, container):
+        main_layout = QVBoxLayout(container)
 
         input_group = QGroupBox("Katalogi Wejściowe")
         input_layout = QVBoxLayout(input_group)
         
-        self.input_list = QListWidget()
+        self.input_list = DropListWidget()
+        self.input_list.paths_dropped.connect(self._add_dropped_paths)
         input_layout.addWidget(self.input_list)
 
         input_btn_layout = QHBoxLayout()
@@ -47,9 +86,17 @@ class MainWindow(QMainWindow):
         btn_clear_dirs = QPushButton("Wyczyść Lista")
         btn_clear_dirs.clicked.connect(self.input_list.clear)
 
+        btn_show_map = QPushButton("Pokaż na Mapie")
+        btn_show_map.clicked.connect(self._show_photos_on_map)
+
+        btn_open_geotagger = QPushButton("Przejdź do Geolokalizacji")
+        btn_open_geotagger.clicked.connect(lambda: self._activate_geotag_tab())
+
         input_btn_layout.addWidget(btn_add_dir)
         input_btn_layout.addWidget(btn_remove_dir)
         input_btn_layout.addWidget(btn_clear_dirs)
+        input_btn_layout.addWidget(btn_show_map)
+        input_btn_layout.addWidget(btn_open_geotagger)
         input_layout.addLayout(input_btn_layout)
         main_layout.addWidget(input_group)
 
@@ -91,7 +138,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(opts_group)
 
         self.btn_start = QPushButton("Rozpocznij Organizację")
-        self.btn_start.setStyleSheet("font-weight: bold; padding: 8px;")
+        self.btn_start.setObjectName("primaryButton")
         self.btn_start.clicked.connect(self._start_processing)
         main_layout.addWidget(self.btn_start)
 
@@ -116,10 +163,58 @@ class MainWindow(QMainWindow):
         for item in self.input_list.selectedItems():
             self.input_list.takeItem(self.input_list.row(item))
 
+    def _add_dropped_paths(self, paths):
+        existing = {self.input_list.item(i).text() for i in range(self.input_list.count())}
+        for p in paths:
+            if p not in existing:
+                self.input_list.addItem(p)
+                existing.add(p)
+
     def _browse_output_dir(self):
         dir_path = QFileDialog.getExistingDirectory(self, "Wybierz katalog docelowy")
         if dir_path:
             self.output_edit.setText(dir_path)
+
+    def _show_photos_on_map(self):
+        input_count = self.input_list.count()
+        if input_count == 0:
+            QMessageBox.warning(self, "Błąd", "Wskaż przynajmniej jeden katalog wejściowy.")
+            return
+
+        input_dirs = [Path(self.input_list.item(i).text()) for i in range(input_count)]
+
+        self.btn_show_map_enabled_widgets = self.sender()
+        if self.btn_show_map_enabled_widgets:
+            self.btn_show_map_enabled_widgets.setEnabled(False)
+            self.btn_show_map_enabled_widgets.setText("Skanowanie EXIF...")
+
+        self.map_worker = GeotagScanWorker(input_dirs)
+        self.map_worker.finished_signal.connect(self._on_map_scan_finished)
+        self.map_worker.start()
+
+    def _on_map_scan_finished(self, photos):
+        if self.btn_show_map_enabled_widgets:
+            self.btn_show_map_enabled_widgets.setEnabled(True)
+            self.btn_show_map_enabled_widgets.setText("Pokaż na Mapie")
+
+        dialog = PhotoMapDialog(
+            photos, parent=self, on_location_picked=self._handle_location_picked_from_map
+        )
+        dialog.exec()
+
+    def _handle_location_picked_from_map(self, photo_path: Path, latitude: float, longitude: float):
+        """Wywoływane, gdy użytkownik kliknie na mapie, aby ustawić lokalizację zdjęcia bez GPS."""
+        self._activate_geotag_tab(photo_path=photo_path, latitude=latitude, longitude=longitude)
+
+    def _activate_geotag_tab(
+        self,
+        photo_path: Optional[Path] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+    ):
+        if photo_path is not None:
+            self.geotag_panel.set_context(photo_path, latitude, longitude)
+        self.tabs.setCurrentWidget(self.geotag_panel)
 
     def _start_processing(self):
         input_count = self.input_list.count()
@@ -181,6 +276,7 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+    app.setStyleSheet(DARK_STYLESHEET)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

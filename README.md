@@ -14,6 +14,9 @@ Features
 - Fast parallel processing is possible because the application uses a multi threaded worker pool.
 - In Dry Run Mode, the user previews the results and generated reports without the software modifying the filesystem.
 - The PySide6 Graphical Interface is available for users alongside a full featured CLI interface.
+- The "Pokaż na Mapie" button reads GPS EXIF data from photos in the selected input directories and displays them as markers with thumbnails on an interactive OpenStreetMap/Leaflet map (requires an internet connection to load map tiles).
+- A separate Geotagging tool lets the user pick a directory or individual JPEG photos, type or search a place name (geocoded via OpenStreetMap Nominatim) or enter coordinates directly, and writes the GPS EXIF data losslessly into the selected files without re-encoding the image.
+- The map preview and the geotagging tool exchange context while staying two separate windows: clicking a photo without GPS data on the map and then clicking a spot on the map opens the geotagger pre-filled with that photo and the chosen coordinates; conversely, the geotagger has a "Wybierz na mapie" button that opens the same map component in picker mode so a location can be chosen by clicking instead of typing.
 
 ---
 
@@ -35,6 +38,12 @@ By running this command, the user launches the PySide6 application
 
 ```bash
 python -m photo_organizer.gui
+```
+
+To launch the standalone geotagging tool (add GPS location to photos):
+
+```bash
+python -m photo_organizer.geotag_gui
 ```
 
 ---

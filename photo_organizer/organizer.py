@@ -51,7 +51,12 @@ def _get_unique_target_path(target_path: Path, existing_paths: Set[Path]) -> Pat
 def _collect_photo_files(input_dirs: List[Path]) -> List[Path]:
     files = []
     for idir in input_dirs:
+        idir = Path(idir)
         if not idir.exists():
+            continue
+        if idir.is_file():
+            if idir.suffix.lower() in SUPPORTED_EXTENSIONS:
+                files.append(idir)
             continue
         for p in idir.rglob("*"):
             if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS:
